@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/white"
+    android:textColor="@color/black"
+    >
+
+    <item
+        android:id="@+id/item_all"
+        android:icon="@drawable/ic_memo_all"
+        android:title="모든 메모" />
+    <item
+        android:id="@+id/item_mine"
+        android:icon="@drawable/ic_memo"
+        android:title="내 메모" />
+    <item
+        android:id="@+id/item_doc"
+        android:icon="@drawable/ic_docu"
+        android:title="문서" />
+    <item
+        android:id="@+id/item_my_folder"
+        android:icon="@drawable/ic_notebook"
+        android:title="내 폴더" />
+    <item
+        android:id="@+id/item_trash"
+        android:icon="@drawable/ic_trash"
+        android:title="휴지통" />
+    <item
+        android:id="@+id/item_new"
+        android:icon="@drawable/ic_add_docu"
+        android:title="새 폴더" />
+
+</menu>
