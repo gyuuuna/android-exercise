@@ -4,13 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F7F3F3"
+    android:background="@color/custom_gray"
     tools:context=".MainActivity">
 
     <androidx.drawerlayout.widget.DrawerLayout
         android:id="@+id/drawer"
-        android:layout_width="419dp"
-        android:layout_height="735dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:background="#00FFFFFF"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -26,33 +26,28 @@
                 android:id="@+id/toolbar"
                 layout="@layout/toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <Gallery
-                android:id="@+id/gallery1"
-                android:layout_width="match_parent"
-                android:layout_height="192dp"
-                android:spacing="20dp"
-                android:unselectedAlpha="0.8" />
+                android:layout_height="150dp" />
 
             <GridView
                 android:id="@+id/grid_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
                 android:numColumns="2"
-                android:layout_marginLeft="20dp"
-                android:layout_marginRight="20dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="parent"/>
+                app:layout_constraintTop_toTopOf="parent">
+            </GridView>
 
         </LinearLayout>
+
 
         <com.google.android.material.navigation.NavigationView
             android:id="@+id/navigation_view"
             android:layout_width="291dp"
-            android:layout_height="736dp"
+            android:layout_height="match_parent"
             android:layout_gravity="left"
             android:background="@color/white"
             android:fitsSystemWindows="true"
@@ -65,7 +60,27 @@
             tools:layout_editor_absoluteY="-5dp"></com.google.android.material.navigation.NavigationView>
 
 
+
     </androidx.drawerlayout.widget.DrawerLayout>
+
+    <ImageButton
+        android:id="@+id/ib_add_memo"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_gravity="bottom|right"
+        android:background="#00FFFFFF"
+        android:minWidth="48dp"
+        android:minHeight="48dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_add_memo"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_editor_absoluteX="100dp"
+        android:layout_marginLeft="300dp"
+        android:layout_marginTop="675dp"
+        tools:ignore="MissingConstraints" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

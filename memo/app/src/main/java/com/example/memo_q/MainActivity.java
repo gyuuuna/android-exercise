@@ -1,8 +1,15 @@
 package com.example.memo_q;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -10,6 +17,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Gallery;
 import android.widget.GridView;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -25,6 +33,21 @@ public class MainActivity extends AppCompatActivity {
     NavigationView navigationView;
     List<Memo> memoes;
 
+    ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    if (result.getResultCode() == 9001) {
+                        Intent intent = result.getData();
+                        String content = intent.getStringExtra("content");
+                        int position = intent.getIntExtra("position", memoes.size() - 1);
+                        Memo memo = memoes.get(position);
+                        memo.content = content;
+                    }
+                }
+            });
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,25 +55,35 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         drawerLayout = (DrawerLayout)findViewById(R.id.drawer);
         navigationView = (NavigationView)findViewById(R.id.navigation_view);
-
         memoes = new ArrayList<>();
-        memoes.add(new Memo("title1", "content1"));
-        memoes.add(new Memo("title2", "content2"));
-        memoes.add(new Memo("title3", "content3"));
-
-        CustomAdapter customAdapter = new CustomAdapter(getApplicationContext(), R.layout.row, memoes);
-        Gallery gallery = findViewById(R.id.gallery1);
-        gallery.setAdapter(customAdapter);
-
 
         GridAdapter gridAdapter = new GridAdapter(getApplicationContext(), R.layout.item_card, memoes);
         GridView gridView = findViewById(R.id.grid_view);
         gridView.setAdapter(gridAdapter);
 
-        TextView tt = (TextView) findViewById(R.id.title);
-        gallery.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                Intent intent = new Intent(MainActivity.this, MainActivity2.class);
+                intent.putExtra("datetime", memoes.get(position).datetime);
+                intent.putExtra("content", memoes.get(position).content);
+                intent.putExtra("position", position);
+                activityResultLauncher.launch(intent);
+            }
+        });
+
+        ImageButton addMemoBtn = (ImageButton) findViewById(R.id.ib_add_memo);
+        addMemoBtn.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, MainActivity2.class);
+                Memo memo = new Memo("");
+                memoes.add(memo);
+                intent.putExtra("datetime", memo.datetime);
+                intent.putExtra("content", memo.content);
+                intent.putExtra("position", memoes.size()-1);
+                activityResultLauncher.launch(intent);
             }
         });
 
@@ -66,8 +99,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        TextView textView = (TextView) findViewById(R.id.title);
+
         switch (item.getItemId()){
             case android.R.id.home:{ // 왼쪽 상단 버튼 눌렀을 때
                 drawerLayout.openDrawer(GravityCompat.START);

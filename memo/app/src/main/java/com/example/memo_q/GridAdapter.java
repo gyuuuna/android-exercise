@@ -46,11 +46,8 @@ public class GridAdapter extends BaseAdapter {
 
         CardView card = (CardView) convertView.findViewById(R.id.card_view);
 
-        TextView tv4 = (TextView) convertView.findViewById(R.id.textView4);
-        tv4.setText(memoes.get(position).title);
-
         TextView tv5 = (TextView) convertView.findViewById(R.id.textView5);
-        tv5.setText(memoes.get(position).datetime.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH:mm")));
+        tv5.setText(memoes.get(position).datetime);
 
         TextView tv6 = (TextView) convertView.findViewById(R.id.textView6);
         tv6.setText(memoes.get(position).content);
