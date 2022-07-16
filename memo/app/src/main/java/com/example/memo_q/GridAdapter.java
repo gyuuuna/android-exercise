@@ -1,5 +1,6 @@
 package com.example.memo_q;
 import android.content.Context;
+import android.database.Cursor;
 import android.os.Build;
 import android.service.autofill.ImageTransformation;
 import android.view.LayoutInflater;
@@ -18,18 +19,18 @@ import java.util.List;
 public class GridAdapter extends BaseAdapter {
     Context context;
     int layout;
-    List<Memo> memoes;
     LayoutInflater inf;
+    DbOpenHelper mDbOpenHelper;
 
-    public GridAdapter(Context context, int layout, List<Memo> memoes){
+    public GridAdapter(Context context, int layout, DbOpenHelper mDbOpenHelper){
         this.context = context;
         this.layout = layout;
-        this.memoes = memoes;
+        this.mDbOpenHelper = mDbOpenHelper;
         inf = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
     @Override
-    public int getCount() { return memoes.size(); }
+    public int getCount() { return mDbOpenHelper.getCountOfRows(); }
 
     @Override
     public Object getItem(int position){ return null; }
@@ -44,13 +45,18 @@ public class GridAdapter extends BaseAdapter {
             convertView = inf.inflate(layout, null);
         }
 
-        CardView card = (CardView) convertView.findViewById(R.id.card_view);
+        Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(position);
+        if(cursor != null && cursor.moveToFirst()){
+            String content = cursor.getString(1);
+            String datetime = cursor.getString(2);
 
-        TextView tv5 = (TextView) convertView.findViewById(R.id.textView5);
-        tv5.setText(memoes.get(position).datetime);
+            TextView tv5 = (TextView) convertView.findViewById(R.id.textView5);
+            tv5.setText(datetime);
 
-        TextView tv6 = (TextView) convertView.findViewById(R.id.textView6);
-        tv6.setText(memoes.get(position).content);
+            TextView tv6 = (TextView) convertView.findViewById(R.id.textView6);
+            tv6.setText(content);
+            cursor.close();
+        }
 
         return convertView;
     }

@@ -10,6 +10,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -20,18 +22,19 @@ import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import com.google.android.material.navigation.NavigationView;
 
+import java.sql.DatabaseMetaData;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     DrawerLayout drawerLayout;
     NavigationView navigationView;
-    List<Memo> memoes;
 
     ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -41,23 +44,35 @@ public class MainActivity extends AppCompatActivity {
                     if (result.getResultCode() == 9001) {
                         Intent intent = result.getData();
                         String content = intent.getStringExtra("content");
-                        int position = intent.getIntExtra("position", memoes.size() - 1);
-                        Memo memo = memoes.get(position);
-                        memo.content = content;
+                        int position = intent.getIntExtra("position", mDbOpenHelper.lastId());
+                        Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(position);
+                        cursor.moveToFirst();
+                        mDbOpenHelper.updateColumnToMemoTable(position, content, cursor.getString(2), cursor.getInt(3));
+
+                        Intent reIntent = new Intent(MainActivity.this, MainActivity.class);
+                        finish();
+                        startActivity(reIntent);
                     }
                 }
             });
+
+    private DbOpenHelper mDbOpenHelper;
+    private int dirId = 1;
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mDbOpenHelper = new DbOpenHelper(this);
+        mDbOpenHelper.open();
+        mDbOpenHelper.create();
+
         drawerLayout = (DrawerLayout)findViewById(R.id.drawer);
         navigationView = (NavigationView)findViewById(R.id.navigation_view);
-        memoes = new ArrayList<>();
 
-        GridAdapter gridAdapter = new GridAdapter(getApplicationContext(), R.layout.item_card, memoes);
+        GridAdapter gridAdapter = new GridAdapter(getApplicationContext(), R.layout.item_card, mDbOpenHelper);
         GridView gridView = findViewById(R.id.grid_view);
         gridView.setAdapter(gridAdapter);
 
@@ -65,8 +80,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 Intent intent = new Intent(MainActivity.this, MainActivity2.class);
-                intent.putExtra("datetime", memoes.get(position).datetime);
-                intent.putExtra("content", memoes.get(position).content);
+                Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(position);
+                cursor.moveToFirst();
+                intent.putExtra("datetime", cursor.getString(2));
+                intent.putExtra("content", cursor.getString(1));
                 intent.putExtra("position", position);
                 activityResultLauncher.launch(intent);
             }
@@ -78,11 +95,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, MainActivity2.class);
-                Memo memo = new Memo("");
-                memoes.add(memo);
-                intent.putExtra("datetime", memo.datetime);
-                intent.putExtra("content", memo.content);
-                intent.putExtra("position", memoes.size()-1);
+                String datetime = DbOpenHelper.createdAt();
+                long result = mDbOpenHelper.insertColumnToMemoTable("", datetime, dirId);
+                if (result == -1)
+                {
+                    Toast.makeText(getApplicationContext(), "Failed", Toast.LENGTH_SHORT).show();
+                }
+
+                int lastId = mDbOpenHelper.lastId();
+
+                intent.putExtra("datetime", datetime);
+                intent.putExtra("content", "");
+                intent.putExtra("position", lastId-1);
                 activityResultLauncher.launch(intent);
             }
         });
@@ -102,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        TextView textView = (TextView) findViewById(R.id.title);
+        TextView title = (TextView) findViewById(R.id.title);
 
         switch (item.getItemId()){
             case android.R.id.home:{ // 왼쪽 상단 버튼 눌렀을 때
@@ -112,18 +136,22 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
             case R.id.item_all:{
-
+                title.setText("모든 메모");
             }
             case R.id.item_mine:{
+                title.setText("내 메모");
 
             }
             case R.id.item_doc:{
+                title.setText("문서");
 
             }
             case R.id.item_my_folder:{
+                title.setText("내 폴더");
 
             }
             case R.id.item_trash:{
+                title.setText("휴지통");
 
             }
             case R.id.item_new:{
