@@ -1,32 +1,39 @@
 package com.example.memo_q;
+
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 
-public class GridAdapter extends BaseAdapter {
+public class MenuAdapter extends BaseAdapter {
     Context context;
     int layout;
     LayoutInflater inf;
     DbOpenHelper mDbOpenHelper;
-    int dirId;
 
-    public GridAdapter(Context context, int layout, DbOpenHelper mDbOpenHelper, int dirId){
+    public MenuAdapter(Context context, int layout, DbOpenHelper mDbOpenHelper){
         this.context = context;
         this.layout = layout;
         this.mDbOpenHelper = mDbOpenHelper;
-        this.dirId = dirId;
         inf = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
     @Override
-    public int getCount() { return mDbOpenHelper.getCountOfMemo(dirId); }
+    public int getCount() { return mDbOpenHelper.getCountOfDir(); }
 
     @Override
     public Object getItem(int position){ return null; }
@@ -36,25 +43,19 @@ public class GridAdapter extends BaseAdapter {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
-    public View getView(int position, View convertView, ViewGroup parent){
-        if(convertView==null){
+    public View getView(int position, View convertView, ViewGroup parent) {
+        if (convertView == null) {
             convertView = inf.inflate(layout, null);
         }
 
-        Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(dirId, position);
-        if(cursor != null){
+        Cursor cursor = mDbOpenHelper.selectColumnsFromDirTable(position);
+        if (cursor != null) {
             String content = cursor.getString(1);
-            String datetime = cursor.getString(2);
-
-            TextView tv5 = (TextView) convertView.findViewById(R.id.textView5);
-            tv5.setText(datetime);
-
-            TextView tv6 = (TextView) convertView.findViewById(R.id.textView6);
-            tv6.setText(content);
+            TextView tv = (TextView) convertView.findViewById(R.id.textView_menu);
+            tv.setText(content);
             cursor.close();
         }
 
         return convertView;
     }
-
 }

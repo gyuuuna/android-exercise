@@ -4,22 +4,21 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.Gallery;
 import android.widget.GridView;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,10 +26,6 @@ import android.widget.Toast;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import com.google.android.material.navigation.NavigationView;
-
-import java.sql.DatabaseMetaData;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     DrawerLayout drawerLayout;
@@ -44,12 +39,44 @@ public class MainActivity extends AppCompatActivity {
                     if (result.getResultCode() == 9001) {
                         Intent intent = result.getData();
                         String content = intent.getStringExtra("content");
-                        int position = intent.getIntExtra("position", mDbOpenHelper.lastId());
-                        Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(position);
+                        int id = intent.getIntExtra("id", mDbOpenHelper.lastMemoId());
+                        Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(id);
                         cursor.moveToFirst();
-                        mDbOpenHelper.updateColumnToMemoTable(position, content, cursor.getString(2), cursor.getInt(3));
+                        mDbOpenHelper.updateColumnToMemoTable(cursor.getInt(0), content, cursor.getString(2), cursor.getInt(3));
 
+                        int previousDirId = intent.getIntExtra("dir_id", -1);
                         Intent reIntent = new Intent(MainActivity.this, MainActivity.class);
+                        reIntent.putExtra("dir_id", previousDirId);
+                        finish();
+                        startActivity(reIntent);
+                    }
+                }
+            });
+
+    ActivityResultLauncher<Intent> popUpResultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @RequiresApi(api = Build.VERSION_CODES.O)
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    if (result.getResultCode() == 9001) {
+                        Intent intent = result.getData();
+                        String name = intent.getStringExtra("name");
+                        mDbOpenHelper.insertColumnToDirTable(name, DbOpenHelper.createdAt());
+
+                        int previousDirId = intent.getIntExtra("dir_id", -1);
+                        Intent reIntent = new Intent(MainActivity.this, MainActivity.class);
+                        reIntent.putExtra("dir_id", previousDirId);
+                        reIntent.putExtra("re", true);
+                        finish();
+                        startActivity(reIntent);
+                    }
+                    else if(result.getResultCode() == 9000) {
+                        Intent intent = result.getData();
+                        int previousDirId = intent.getIntExtra("dir_id", -1);
+                        Intent reIntent = new Intent(MainActivity.this, MainActivity.class);
+                        reIntent.putExtra("dir_id", previousDirId);
+                        reIntent.putExtra("re", true);
                         finish();
                         startActivity(reIntent);
                     }
@@ -57,8 +84,9 @@ public class MainActivity extends AppCompatActivity {
             });
 
     private DbOpenHelper mDbOpenHelper;
-    private int dirId = 1;
+    private int dirId;
 
+    @SuppressLint("ResourceAsColor")
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,22 +100,15 @@ public class MainActivity extends AppCompatActivity {
         drawerLayout = (DrawerLayout)findViewById(R.id.drawer);
         navigationView = (NavigationView)findViewById(R.id.navigation_view);
 
-        GridAdapter gridAdapter = new GridAdapter(getApplicationContext(), R.layout.item_card, mDbOpenHelper);
-        GridView gridView = findViewById(R.id.grid_view);
-        gridView.setAdapter(gridAdapter);
+        if(getIntent().getBooleanExtra("re", false)){
+            drawerLayout.openDrawer(GravityCompat.START);
+            drawerLayout.bringChildToFront(navigationView);
+            drawerLayout.requestLayout();
+        }
+        dirId = getIntent().getIntExtra("dir_id", -1);
+        setDirId(dirId);
 
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                Intent intent = new Intent(MainActivity.this, MainActivity2.class);
-                Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(position);
-                cursor.moveToFirst();
-                intent.putExtra("datetime", cursor.getString(2));
-                intent.putExtra("content", cursor.getString(1));
-                intent.putExtra("position", position);
-                activityResultLauncher.launch(intent);
-            }
-        });
+        updateGridview();
 
         ImageButton addMemoBtn = (ImageButton) findViewById(R.id.ib_add_memo);
         addMemoBtn.setOnClickListener(new View.OnClickListener() {
@@ -97,20 +118,169 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(MainActivity.this, MainActivity2.class);
                 String datetime = DbOpenHelper.createdAt();
                 long result = mDbOpenHelper.insertColumnToMemoTable("", datetime, dirId);
-                if (result == -1)
-                {
-                    Toast.makeText(getApplicationContext(), "Failed", Toast.LENGTH_SHORT).show();
-                }
-
-                int lastId = mDbOpenHelper.lastId();
+                if (result == -1) Toast.makeText(getApplicationContext(), "Failed", Toast.LENGTH_SHORT).show();
 
                 intent.putExtra("datetime", datetime);
                 intent.putExtra("content", "");
-                intent.putExtra("position", lastId-1);
+                intent.putExtra("id", mDbOpenHelper.lastMemoId());
+                intent.putExtra("dir_id", dirId);
                 activityResultLauncher.launch(intent);
             }
         });
 
+        MenuAdapter menuAdapter = new MenuAdapter(getApplicationContext(), R.layout.item, mDbOpenHelper);
+        ListView listView = (ListView) findViewById(R.id.listView_menu);
+        listView.setAdapter(menuAdapter);
+        setListViewHeightBasedOnChildren(listView);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @SuppressLint("Range")
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                setDirId(position+3);
+                drawerLayout.closeDrawer(GravityCompat.START);
+                updateGridview();
+            }
+        });
+
+        findViewById(R.id.menu_all).setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("ResourceAsColor")
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            @Override
+            public void onClick(View view) {
+                setDirId(-1);
+                drawerLayout.closeDrawer(GravityCompat.START);
+                updateGridview();
+            }
+        });
+        findViewById(R.id.menu_my).setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("ResourceAsColor")
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            @Override
+            public void onClick(View view) {
+                setDirId(0);
+                drawerLayout.closeDrawer(GravityCompat.START);
+                updateGridview();
+            }
+        });
+        findViewById(R.id.menu_docu).setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("ResourceAsColor")
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            @Override
+            public void onClick(View view) {
+                setDirId(1);
+                drawerLayout.closeDrawer(GravityCompat.START);
+                updateGridview();
+            }
+        });
+        findViewById(R.id.menu_trash).setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("ResourceAsColor")
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            @Override
+            public void onClick(View view) {
+                setDirId(2);
+                drawerLayout.closeDrawer(GravityCompat.START);
+                updateGridview();
+            }
+        });
+        findViewById(R.id.menu_add).setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("ResourceAsColor")
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, PopUpActivity.class);
+                String datetime = DbOpenHelper.createdAt();
+                intent.putExtra("name", "");
+                intent.putExtra("dir_id", dirId);
+                popUpResultLauncher.launch(intent);
+            }
+        });
+
+    }
+
+    private static void setListViewHeightBasedOnChildren(ListView listView)
+    {
+        ListAdapter listAdapter = listView.getAdapter();
+        if (listAdapter == null)
+            return;
+
+        int desiredWidth = View.MeasureSpec.makeMeasureSpec(listView.getWidth(), View.MeasureSpec.UNSPECIFIED);
+        int totalHeight=0;
+        View view = null;
+
+        for (int i = 0; i < listAdapter.getCount(); i++)
+        {
+            view = listAdapter.getView(i, view, listView);
+
+            if (i == 0)
+                view.setLayoutParams(new ViewGroup.LayoutParams(desiredWidth,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
+
+            view.measure(desiredWidth, View.MeasureSpec.UNSPECIFIED);
+            totalHeight += view.getMeasuredHeight();
+
+        }
+
+        ViewGroup.LayoutParams params = listView.getLayoutParams();
+        params.height = totalHeight + ((listView.getDividerHeight()) * (listAdapter.getCount()));
+
+        listView.setLayoutParams(params);
+        listView.requestLayout();
+
+    }
+
+    private void setDirId(int dirId){
+        this.dirId = dirId;
+        String title;
+        TextView barTitle = (TextView) findViewById(R.id.title);
+        ImageButton addMemoButton = findViewById(R.id.ib_add_memo);
+        switch(dirId){
+            case -1:
+                barTitle.setText("모든 메모");
+                addMemoButton.setEnabled(true);
+                addMemoButton.setVisibility(View.VISIBLE);
+                break;
+            case 0:
+                barTitle.setText("내 메모");
+                addMemoButton.setEnabled(true);
+                addMemoButton.setVisibility(View.VISIBLE);
+                break;
+            case 1:
+                barTitle.setText("문서");
+                addMemoButton.setEnabled(true);
+                addMemoButton.setVisibility(View.VISIBLE);
+                break;
+            case 2:
+                barTitle.setText("휴지통");
+                addMemoButton.setEnabled(false);
+                addMemoButton.setVisibility(View.INVISIBLE);
+                break;
+            default:
+                Cursor cursor = mDbOpenHelper.selectColumnsFromDirTable(dirId-3);
+                String name = cursor.getString(1);
+                barTitle.setText(name);
+                addMemoButton.setEnabled(true);
+                addMemoButton.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void updateGridview(){
+        GridAdapter gridAdapter = new GridAdapter(getApplicationContext(), R.layout.item_card, mDbOpenHelper, dirId);
+        GridView gridView = findViewById(R.id.grid_view);
+        gridView.setAdapter(gridAdapter);
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @SuppressLint("Range")
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                Intent intent = new Intent(MainActivity.this, MainActivity2.class);
+                Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(dirId, position);
+                intent.putExtra("datetime", cursor.getString(2));
+                intent.putExtra("content", cursor.getString(1));
+                intent.putExtra("id", cursor.getInt(cursor.getColumnIndex("_id")));
+                intent.putExtra("dir_id", dirId);
+                activityResultLauncher.launch(intent);
+            }
+        });
     }
 
     public void onMenuSelected(View view){
@@ -123,46 +293,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        TextView title = (TextView) findViewById(R.id.title);
-
-        switch (item.getItemId()){
-            case android.R.id.home:{ // 왼쪽 상단 버튼 눌렀을 때
-                drawerLayout.openDrawer(GravityCompat.START);
-                drawerLayout.bringChildToFront(navigationView);
-                drawerLayout.requestLayout();
-                return true;
-            }
-            case R.id.item_all:{
-                title.setText("모든 메모");
-            }
-            case R.id.item_mine:{
-                title.setText("내 메모");
-
-            }
-            case R.id.item_doc:{
-                title.setText("문서");
-
-            }
-            case R.id.item_my_folder:{
-                title.setText("내 폴더");
-
-            }
-            case R.id.item_trash:{
-                title.setText("휴지통");
-
-            }
-            case R.id.item_new:{
-
-            }
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onBackPressed() { //뒤로가기 했을 때
+    public void onBackPressed() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START);
         } else {

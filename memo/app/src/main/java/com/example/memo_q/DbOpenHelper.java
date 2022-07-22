@@ -78,18 +78,38 @@ public class DbOpenHelper {
 
     // SELECT
 
-    public Cursor selectColumnsFromDirTable(){
+    public Cursor selectDir(){
         return mDB.query(DirDatabase.CreateDB._TABLENAME0, null, null, null, null, null, null);
     }
-    public Cursor selectColumnsFromMemoTable(){
+
+    public Cursor selectColumnsFromDirTable(int position){
+        Cursor selected = selectDir();
+        selected.moveToPosition(position);
+        return selected;
+    }
+
+    public Cursor selectMemo(){
         return mDB.query(MemoDatabase.CreateDB._TABLENAME0, null, null, null, null, null, null);
     }
-    public Cursor selectColumnsFromMemoTable(int position){
-        /*
-        Cursor cursor = selectColumnsFromMemoTable();
-        return mDB.rawQuery("SELECT * FROM memotable WHERE _id = "+position, null);
-         */
-        return mDB.query(MemoDatabase.CreateDB._TABLENAME0, null, "_id=?", new String[]{Integer.toString(position+1)}, null, null, null);
+        // return mDB.rawQuery("SELECT * FROM memotable", null);
+
+    public Cursor selectMemo(int dirId){
+        return mDB.query(MemoDatabase.CreateDB._TABLENAME0, null, "dir_id=?", new String[]{Integer.toString(dirId)}, null, null, null);
+    }
+
+    public Cursor selectColumnsFromMemoTable(int dirId, int position){
+        Cursor selected;
+        if(dirId<0)
+            selected = selectMemo();
+        else
+            selected = selectMemo(dirId);
+
+        selected.moveToPosition(position);
+        return selected;
+    }
+
+    public Cursor selectColumnsFromMemoTable(int id){
+        return mDB.query(MemoDatabase.CreateDB._TABLENAME0, null, "_id=?", new String[]{Integer.toString(id)}, null, null, null);
     }
 
     /*
@@ -115,7 +135,7 @@ public class DbOpenHelper {
         ContentValues values = new ContentValues();
         values.put(DirDatabase.CreateDB.NAME, name);
         values.put(DirDatabase.CreateDB.CREATED_AT, created_at);
-        return mDB.update(DirDatabase.CreateDB._TABLENAME0, values, "_id=?", new String[]{Integer.toString(id+1)}) > 0;
+        return mDB.update(DirDatabase.CreateDB._TABLENAME0, values, "_id=?", new String[]{Integer.toString(id)}) > 0;
     }
 
     public boolean updateColumnToMemoTable(int id, String content, String created_at, int dir_id){
@@ -123,7 +143,7 @@ public class DbOpenHelper {
         values.put(MemoDatabase.CreateDB.CONTENT, content);
         values.put(MemoDatabase.CreateDB.CREATED_AT, created_at);
         values.put(MemoDatabase.CreateDB.DIR_ID, dir_id);
-        return mDB.update(MemoDatabase.CreateDB._TABLENAME0, values, "_id=?", new String[]{Integer.toString(id+1)}) > 0;
+        return mDB.update(MemoDatabase.CreateDB._TABLENAME0, values, "_id=?", new String[]{Integer.toString(id)}) > 0;
     }
 
     // DELETE ALL
@@ -154,15 +174,35 @@ public class DbOpenHelper {
     }
 
     @SuppressLint("Range")
-    public int lastId(){
+    public int lastDirId(){
+        Cursor cursor = mDB.rawQuery( "SELECT MAX(_id) FROM dirtable;", null);
+        cursor.moveToFirst();
+        return cursor.getInt(0);
+    }
+
+    @SuppressLint("Range")
+    public int lastMemoId(){
         Cursor cursor = mDB.rawQuery( "SELECT MAX(_id) FROM memotable;", null);
         cursor.moveToFirst();
         return cursor.getInt(0);
     }
 
     @SuppressLint("Range")
-    public int getCountOfRows(){
+    public int getCountOfMemo(){
         Cursor cursor = mDB.rawQuery( "SELECT COUNT(_id) FROM memotable;", null);
+        cursor.moveToFirst();
+        return cursor.getInt(0);
+    }
+
+    public int getCountOfMemo(int dirId){
+        if(dirId<0) return getCountOfMemo();
+        Cursor cursor = mDB.rawQuery( "SELECT COUNT(_id) FROM memotable WHERE dir_id=?;", new String[]{Integer.toString(dirId)});
+        cursor.moveToFirst();
+        return cursor.getInt(0);
+    }
+
+    public int getCountOfDir(){
+        Cursor cursor = mDB.rawQuery( "SELECT COUNT(_id) FROM dirtable;", null);
         cursor.moveToFirst();
         return cursor.getInt(0);
     }

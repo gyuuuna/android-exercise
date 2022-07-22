@@ -17,7 +17,8 @@ public class MainActivity2 extends AppCompatActivity {
         setContentView(R.layout.activity_main2);
 
         Intent intent = getIntent();
-        int position = intent.getIntExtra("position", 0);
+        int id = intent.getIntExtra("id", 0);
+        int dirId = intent.getIntExtra("dir_id", -1);
         String content = intent.getStringExtra("content");
         String datetime = intent.getStringExtra("datetime");
 
@@ -33,7 +34,8 @@ public class MainActivity2 extends AppCompatActivity {
             public void onClick(View view) {
                 Intent finishIntent = new Intent(getApplicationContext(), MainActivity.class);
                 finishIntent.putExtra("content", editText.getText().toString());
-                finishIntent.putExtra("position", position);
+                finishIntent.putExtra("id", id);
+                finishIntent.putExtra("dir_id", dirId);
                 setResult(9001, finishIntent);
                 finish();
             }

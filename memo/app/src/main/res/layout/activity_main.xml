@@ -49,17 +49,237 @@
             android:layout_width="291dp"
             android:layout_height="match_parent"
             android:layout_gravity="left"
-            android:background="@color/white"
+            android:background="#00000000"
             android:fitsSystemWindows="true"
-            app:headerLayout="@layout/navi_header"
-            app:itemBackground="@color/white"
-            app:itemIconTint="@color/black"
-            app:itemTextColor="@color/black"
-            app:menu="@menu/navi_menu"
             tools:ignore="MissingConstraints"
-            tools:layout_editor_absoluteY="-5dp"></com.google.android.material.navigation.NavigationView>
+            tools:layout_editor_absoluteY="-5dp">
 
+            <androidx.cardview.widget.CardView
+                android:backgroundTint="@color/white"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                tools:ignore="MissingConstraints">
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <ScrollView
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical">
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="20dp"></View>
+
+                            <LinearLayout
+                                android:id="@+id/menu_all"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:layout_marginTop="10dp"
+                                android:layout_marginBottom="10dp"
+                                android:clickable="true"
+                                android:orientation="horizontal">
+                                <ImageButton
+                                    android:id="@+id/ib_menu_all"
+                                    android:layout_width="25dp"
+                                    android:layout_height="25dp"
+                                    android:layout_gravity="center_vertical|left"
+                                    android:layout_marginLeft="20dp"
+                                    android:layout_marginBottom="5dp"
+                                    android:background="#00FFFFFF"
+                                    android:minWidth="48dp"
+                                    android:minHeight="48dp"
+                                    android:scaleType="fitXY"
+                                    android:src="@drawable/ic_memo_all"
+                                    tools:ignore="MissingConstraints"></ImageButton>
+                                <TextView
+                                    android:id="@+id/textView_menu_all"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_marginLeft="15dp"
+                                    android:layout_marginTop="5dp"
+                                    android:layout_marginBottom="5dp"
+                                    android:layout_marginRight="5dp"
+                                    android:textColor="@color/black"
+                                    android:text="모든 메모"
+                                    android:textSize="20dp"></TextView>
+                            </LinearLayout>
+                            <View
+                                android:background="#C1C1C1"
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"></View>
+                            <LinearLayout
+                                android:id="@+id/menu_my"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:layout_marginTop="10dp"
+                                android:layout_marginBottom="10dp"
+                                android:clickable="true"
+                                android:orientation="horizontal">
+                                <ImageButton
+                                    android:id="@+id/ib_menu_my"
+                                    android:layout_width="25dp"
+                                    android:layout_height="25dp"
+                                    android:layout_gravity="center_vertical|left"
+                                    android:layout_marginLeft="20dp"
+                                    android:layout_marginBottom="5dp"
+                                    android:background="#00FFFFFF"
+                                    android:minWidth="48dp"
+                                    android:minHeight="48dp"
+                                    android:scaleType="fitXY"
+                                    android:src="@drawable/ic_memo"
+                                    tools:ignore="MissingConstraints"></ImageButton>
+                                <TextView
+                                    android:id="@+id/textView_menu_my"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_marginLeft="15dp"
+                                    android:layout_marginTop="5dp"
+                                    android:layout_marginBottom="5dp"
+                                    android:layout_marginRight="5dp"
+                                    android:textColor="@color/black"
+                                    android:text="내 메모"
+                                    android:textSize="20dp"></TextView>
+                            </LinearLayout>
+                            <View
+                                android:background="#C1C1C1"
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"></View>
+                            <LinearLayout
+                                android:id="@+id/menu_docu"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:layout_marginTop="10dp"
+                                android:layout_marginBottom="10dp"
+                                android:clickable="true"
+                                android:orientation="horizontal">
+                                <ImageButton
+                                    android:id="@+id/ib_menu_docu"
+                                    android:layout_width="25dp"
+                                    android:layout_height="25dp"
+                                    android:layout_gravity="center_vertical|left"
+                                    android:layout_marginLeft="20dp"
+                                    android:layout_marginBottom="5dp"
+                                    android:background="#00FFFFFF"
+                                    android:minWidth="48dp"
+                                    android:minHeight="48dp"
+                                    android:scaleType="fitXY"
+                                    android:src="@drawable/ic_docu"
+                                    tools:ignore="MissingConstraints"></ImageButton>
+                                <TextView
+                                    android:id="@+id/textView_menu_docu"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_marginLeft="15dp"
+                                    android:layout_marginTop="5dp"
+                                    android:layout_marginBottom="5dp"
+                                    android:layout_marginRight="5dp"
+                                    android:textColor="@color/black"
+                                    android:text="문서"
+                                    android:textSize="20dp"></TextView>
+                            </LinearLayout>
+                            <View
+                                android:background="#C1C1C1"
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"></View>
+
+                            <ListView
+                                android:id="@+id/listView_menu"
+                                android:clickable="true"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"/>
+
+                            <LinearLayout
+                                android:id="@+id/menu_trash"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:layout_marginTop="10dp"
+                                android:layout_marginBottom="10dp"
+                                android:clickable="true"
+                                android:orientation="horizontal">
+                                <ImageButton
+                                    android:id="@+id/ib_menu_trash"
+                                    android:layout_width="25dp"
+                                    android:layout_height="25dp"
+                                    android:layout_gravity="center_vertical|left"
+                                    android:layout_marginLeft="20dp"
+                                    android:layout_marginBottom="5dp"
+                                    android:background="#00FFFFFF"
+                                    android:minWidth="48dp"
+                                    android:minHeight="48dp"
+                                    android:scaleType="fitXY"
+                                    android:src="@drawable/ic_trash"
+                                    tools:ignore="MissingConstraints"></ImageButton>
+                                <TextView
+                                    android:id="@+id/textView_menu_trash"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_marginLeft="15dp"
+                                    android:layout_marginTop="5dp"
+                                    android:layout_marginBottom="5dp"
+                                    android:layout_marginRight="5dp"
+                                    android:textColor="@color/black"
+                                    android:text="휴지통"
+                                    android:textSize="20dp"></TextView>
+                            </LinearLayout>
+                            <View
+                                android:background="#C1C1C1"
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"></View>
+                            <LinearLayout
+                                android:id="@+id/menu_add"
+                                android:layout_width="match_parent"
+                                android:layout_height="40dp"
+                                android:layout_marginTop="10dp"
+                                android:layout_marginBottom="10dp"
+                                android:clickable="true"
+                                android:orientation="horizontal">
+                                <ImageButton
+                                    android:id="@+id/ib_menu_add"
+                                    android:layout_width="25dp"
+                                    android:layout_height="25dp"
+                                    android:layout_gravity="center_vertical|left"
+                                    android:layout_marginLeft="20dp"
+                                    android:layout_marginBottom="5dp"
+                                    android:background="#00FFFFFF"
+                                    android:minWidth="48dp"
+                                    android:minHeight="48dp"
+                                    android:scaleType="fitXY"
+                                    android:src="@drawable/ic_add_docu"
+                                    tools:ignore="MissingConstraints"></ImageButton>
+                                <TextView
+                                    android:id="@+id/textView_menu_add"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_marginLeft="15dp"
+                                    android:layout_marginTop="5dp"
+                                    android:layout_marginBottom="5dp"
+                                    android:layout_marginRight="5dp"
+                                    android:textColor="@color/black"
+                                    android:text="새 폴더"
+                                    android:textSize="20dp"></TextView>
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </ScrollView>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+        </com.google.android.material.navigation.NavigationView>
 
     </androidx.drawerlayout.widget.DrawerLayout>
 

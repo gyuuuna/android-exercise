@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#00FFFFFF"
+    tools:context=".PopUpActivity">
+
+    <androidx.cardview.widget.CardView
+        android:backgroundTint="@color/white"
+        android:layout_width="0dp"
+        android:layout_height="254dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="170dp"
+        android:layout_marginEnd="12dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp"
+        tools:ignore="MissingConstraints">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginLeft="30dp"
+            android:text="새 폴더"
+            android:textColor="@color/black"
+            android:textStyle="bold"
+            android:textSize="20dp"></TextView>
+
+        <EditText
+            android:id="@+id/popup_text"
+            android:textColor="@color/black"
+            android:hint="새 폴더"
+            android:textColorHint="#777777"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginTop="70dp"
+            android:layout_marginRight="30dp"></EditText>
+
+        <Button
+            android:id="@+id/popup_no"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="60dp"
+            android:layout_marginBottom="20dp"
+            android:layout_gravity="bottom|left"
+            android:background="#00FFFFFF"
+            android:text="취소"
+            android:textColor="@color/custom_red"
+            android:textSize="20dp"
+            android:textStyle="bold"></Button>
+
+        <Button
+            android:id="@+id/popup_yes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="60dp"
+            android:layout_marginBottom="20dp"
+            android:layout_gravity="bottom|right"
+            android:background="#00FFFFFF"
+            android:text="저장"
+            android:textColor="@color/custom_red"
+            android:textSize="20dp"
+            android:textStyle="bold"></Button>
+
+
+    </androidx.cardview.widget.CardView>
+</androidx.constraintlayout.widget.ConstraintLayout>
