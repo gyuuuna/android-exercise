@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/white"
+    android:textColor="@color/black">
+    <group>
+        <item android:id="@+id/trash_delete"
+            android:title="삭제"/>
+        <item android:id="@+id/trash_restore"
+            android:title="복원"/>
+    </group>
+
+</menu>

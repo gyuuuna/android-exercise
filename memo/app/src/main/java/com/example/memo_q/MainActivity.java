@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -20,6 +21,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,7 +44,19 @@ public class MainActivity extends AppCompatActivity {
                         int id = intent.getIntExtra("id", mDbOpenHelper.lastMemoId());
                         Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(id);
                         cursor.moveToFirst();
-                        mDbOpenHelper.updateColumnToMemoTable(cursor.getInt(0), content, cursor.getString(2), cursor.getInt(3));
+                        // mDbOpenHelper.updateColumnToMemoTable(cursor.getInt(0), content, cursor.getString(2), cursor.getInt(3));
+                        mDbOpenHelper.updateColumnToMemoTable(cursor.getInt(0), content);
+
+                        int previousDirId = intent.getIntExtra("dir_id", -1);
+                        Intent reIntent = new Intent(MainActivity.this, MainActivity.class);
+                        reIntent.putExtra("dir_id", previousDirId);
+                        finish();
+                        startActivity(reIntent);
+                    }
+                    else if(result.getResultCode() == 9002) {
+                        Intent intent = result.getData();
+                        int id = intent.getIntExtra("id", mDbOpenHelper.lastMemoId());
+                        mDbOpenHelper.updateIsDeletedToTrue(id);
 
                         int previousDirId = intent.getIntExtra("dir_id", -1);
                         Intent reIntent = new Intent(MainActivity.this, MainActivity.class);
@@ -279,6 +293,49 @@ public class MainActivity extends AppCompatActivity {
                 intent.putExtra("id", cursor.getInt(cursor.getColumnIndex("_id")));
                 intent.putExtra("dir_id", dirId);
                 activityResultLauncher.launch(intent);
+            }
+        });
+        gridView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @SuppressLint("Range")
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int position, long id) {
+                Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(dirId, position);
+                int memoId = cursor.getInt(cursor.getColumnIndex("_id"));
+                String content = cursor.getString(1);
+
+                PopupMenu popup = new PopupMenu(getApplicationContext(), view);
+                if(dirId==2){
+                    getMenuInflater().inflate(R.menu.trash_menu, popup.getMenu());
+                    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem menuItem) {
+                            switch(menuItem.getItemId()){
+                                case R.id.trash_delete:
+                                    mDbOpenHelper.deleteColumnOfMemoTable(memoId);
+                                    updateGridview();
+                                    break;
+                                case R.id.trash_restore:
+                                    mDbOpenHelper.updateIsDeletedToFalse(memoId);
+                                    updateGridview();
+                                    break;
+                            } return true;
+                        }
+                    });
+                }
+                else{
+                    getMenuInflater().inflate(R.menu.memo_menu, popup.getMenu());
+                    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem menuItem) {
+                            switch(menuItem.getItemId()){
+                                case R.id.memo_delete:
+                                    mDbOpenHelper.updateIsDeletedToTrue(memoId);
+                                    updateGridview();
+                            } return true;
+                        }
+                    });
+                }
+                popup.show(); return true;
             }
         });
     }

@@ -73,6 +73,7 @@ public class DbOpenHelper {
         values.put(MemoDatabase.CreateDB.CONTENT, content);
         values.put(MemoDatabase.CreateDB.CREATED_AT, created_at);
         values.put(MemoDatabase.CreateDB.DIR_ID, dir_id);
+        values.put(MemoDatabase.CreateDB.IS_DELETED, "false"); // 추가됨!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         return mDB.insert(MemoDatabase.CreateDB._TABLENAME0, null, values);
     }
 
@@ -89,17 +90,22 @@ public class DbOpenHelper {
     }
 
     public Cursor selectMemo(){
-        return mDB.query(MemoDatabase.CreateDB._TABLENAME0, null, null, null, null, null, null);
+        return mDB.query(MemoDatabase.CreateDB._TABLENAME0, null, "is_deleted=?", new String[]{"false"},  null, null, null);
     }
-        // return mDB.rawQuery("SELECT * FROM memotable", null);
 
     public Cursor selectMemo(int dirId){
-        return mDB.query(MemoDatabase.CreateDB._TABLENAME0, null, "dir_id=?", new String[]{Integer.toString(dirId)}, null, null, null);
+        return mDB.query(MemoDatabase.CreateDB._TABLENAME0, null, "dir_id=? AND is_deleted=?", new String[]{Integer.toString(dirId), "false"}, null, null, null);
+    }
+
+    public Cursor selectTrashMemo(){
+        return mDB.query(MemoDatabase.CreateDB._TABLENAME0, null, "is_deleted=?", new String[]{"true"},  null, null, null);
     }
 
     public Cursor selectColumnsFromMemoTable(int dirId, int position){
         Cursor selected;
-        if(dirId<0)
+        if(dirId==2)
+            selected = selectTrashMemo();
+        else if(dirId<0)
             selected = selectMemo();
         else
             selected = selectMemo(dirId);
@@ -112,12 +118,8 @@ public class DbOpenHelper {
         return mDB.query(MemoDatabase.CreateDB._TABLENAME0, null, "_id=?", new String[]{Integer.toString(id)}, null, null, null);
     }
 
-    /*
-    Cursor를 사용해 특정 name을 포함하는 행의 데이터를 찾아내는 예제 코드는 다음과 같습니다.
-     - moveToNext(): 커서를 다음 행으로 이동시킵니다.
-     - getColumnIndex(column_name): 커서에서 column_name에 해당하는 index를 반환합니다. 해당 column_name이 없는 경우에는 -1을 반환합니다.
-     - getString(index): 해당 index에 있는 값을 String의 형태로 반환합니다.
-    */
+
+
 
     public Cursor sortColumnOfDirTable(String sort){
         Cursor c = mDB.rawQuery( "SELECT * FROM dirtable ORDER BY " + sort + ";", null);
@@ -138,6 +140,7 @@ public class DbOpenHelper {
         return mDB.update(DirDatabase.CreateDB._TABLENAME0, values, "_id=?", new String[]{Integer.toString(id)}) > 0;
     }
 
+    /*
     public boolean updateColumnToMemoTable(int id, String content, String created_at, int dir_id){
         ContentValues values = new ContentValues();
         values.put(MemoDatabase.CreateDB.CONTENT, content);
@@ -145,6 +148,32 @@ public class DbOpenHelper {
         values.put(MemoDatabase.CreateDB.DIR_ID, dir_id);
         return mDB.update(MemoDatabase.CreateDB._TABLENAME0, values, "_id=?", new String[]{Integer.toString(id)}) > 0;
     }
+     */
+
+    public boolean updateColumnToMemoTable(int id, String content){
+        ContentValues values = new ContentValues();
+        values.put(MemoDatabase.CreateDB.CONTENT, content);
+        return mDB.update(MemoDatabase.CreateDB._TABLENAME0, values, "_id=? AND is_deleted=?", new String[]{Integer.toString(id), "false"}) > 0;
+    }
+
+    public boolean updateColumnToMemoTable(int id, int dir_id){
+        ContentValues values = new ContentValues();
+        values.put(MemoDatabase.CreateDB.DIR_ID, dir_id);
+        return mDB.update(MemoDatabase.CreateDB._TABLENAME0, values, "_id=? AND is_deleted=?", new String[]{Integer.toString(id), "false"}) > 0;
+    }
+
+    public boolean updateIsDeletedToTrue(int id){
+        ContentValues values = new ContentValues();
+        values.put(MemoDatabase.CreateDB.IS_DELETED, "true");
+        return mDB.update(MemoDatabase.CreateDB._TABLENAME0, values, "_id=? AND is_deleted=?", new String[]{Integer.toString(id), "false"}) > 0;
+    }
+
+    public boolean updateIsDeletedToFalse(int id){
+        ContentValues values = new ContentValues();
+        values.put(MemoDatabase.CreateDB.IS_DELETED, "false");
+        return mDB.update(MemoDatabase.CreateDB._TABLENAME0, values, "_id=? AND is_deleted=?", new String[]{Integer.toString(id), "true"}) > 0;
+    }
+
 
     // DELETE ALL
 
@@ -163,7 +192,7 @@ public class DbOpenHelper {
     }
 
     public boolean deleteColumnOfMemoTable(long id){
-        return mDB.delete(MemoDatabase.CreateDB._TABLENAME0, "_id="+id, null) > 0;
+        return mDB.delete(MemoDatabase.CreateDB._TABLENAME0, "_id=? AND is_deleted=?", new String[]{Long.toString(id), "true"}) > 0;
     }
 
     // Created at
@@ -189,14 +218,19 @@ public class DbOpenHelper {
 
     @SuppressLint("Range")
     public int getCountOfMemo(){
-        Cursor cursor = mDB.rawQuery( "SELECT COUNT(_id) FROM memotable;", null);
+        Cursor cursor = mDB.rawQuery( "SELECT COUNT(_id) FROM memotable WHERE is_deleted=?;", new String[]{"false"});
         cursor.moveToFirst();
         return cursor.getInt(0);
     }
 
     public int getCountOfMemo(int dirId){
         if(dirId<0) return getCountOfMemo();
-        Cursor cursor = mDB.rawQuery( "SELECT COUNT(_id) FROM memotable WHERE dir_id=?;", new String[]{Integer.toString(dirId)});
+        if(dirId==2){
+            Cursor cursor = mDB.rawQuery( "SELECT COUNT(_id) FROM memotable WHERE is_deleted=?;", new String[]{"true"});
+            cursor.moveToFirst();
+            return cursor.getInt(0);
+        }
+        Cursor cursor = mDB.rawQuery( "SELECT COUNT(_id) FROM memotable WHERE dir_id=? AND is_deleted=?;", new String[]{Integer.toString(dirId), "false"});
         cursor.moveToFirst();
         return cursor.getInt(0);
     }

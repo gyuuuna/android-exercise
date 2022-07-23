@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/white"
+    android:textColor="@color/black">
+    <item android:id="@+id/etc_option_delete"
+        android:title="삭제"/>
+    <item android:id="@+id/etc_option_trasfer"
+        android:title="폴더 이동"/>
+</menu>
