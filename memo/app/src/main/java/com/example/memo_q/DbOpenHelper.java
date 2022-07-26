@@ -192,7 +192,7 @@ public class DbOpenHelper {
     }
 
     public boolean deleteColumnOfMemoTable(long id){
-        return mDB.delete(MemoDatabase.CreateDB._TABLENAME0, "_id=? AND is_deleted=?", new String[]{Long.toString(id), "true"}) > 0;
+        return mDB.delete(MemoDatabase.CreateDB._TABLENAME0, "_id=? AND is_deleted=?", new String[]{Integer.toString((int) id), "false"}) > 0;
     }
 
     // Created at

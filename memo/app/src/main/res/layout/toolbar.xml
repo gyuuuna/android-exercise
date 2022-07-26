@@ -61,6 +61,7 @@
             android:background="#00FFFFFF"
             android:minWidth="48dp"
             android:minHeight="48dp"
+            android:onClick="onDeleteSelected"
             android:src="@drawable/ic_red_trash" />
 
         <ImageButton
@@ -73,6 +74,7 @@
             android:background="#00FFFFFF"
             android:minWidth="48dp"
             android:minHeight="48dp"
+            android:onClick="onEtcSelected"
             android:src="@drawable/ic_three_dots" />
 
 

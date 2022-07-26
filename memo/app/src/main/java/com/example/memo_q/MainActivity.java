@@ -97,6 +97,33 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
+    ActivityResultLauncher<Intent> selectRemoveResultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @RequiresApi(api = Build.VERSION_CODES.O)
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    // 삭제 or 폴더 이동
+                    if (result.getResultCode() == 9001) {
+                        Intent intent = result.getData();
+                        int previousDirId = intent.getIntExtra("dir_id", -1);
+                        Intent reIntent = new Intent(MainActivity.this, MainActivity.class);
+                        reIntent.putExtra("dir_id", previousDirId);
+                        finish();
+                        startActivity(reIntent);
+                    }
+                    // 취소
+                    else if(result.getResultCode() == 9000) {
+                        Intent intent = result.getData();
+                        int previousDirId = intent.getIntExtra("dir_id", -1);
+                        Intent reIntent = new Intent(MainActivity.this, MainActivity.class);
+                        reIntent.putExtra("dir_id", previousDirId);
+                        finish();
+                        startActivity(reIntent);
+                    }
+                }
+            });
+
     private DbOpenHelper mDbOpenHelper;
     private int dirId;
 
@@ -348,6 +375,35 @@ public class MainActivity extends AppCompatActivity {
             drawerLayout.bringChildToFront(navigationView);
             drawerLayout.requestLayout();
         }
+    }
+
+    public void onEtcSelected(View view){
+        PopupMenu popup = new PopupMenu(getApplicationContext(), view);
+        getMenuInflater().inflate(R.menu.main_option_menu, popup.getMenu());
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                switch(menuItem.getItemId()){
+                    case R.id.main_option_trasfer:
+                        Intent intent = new Intent(MainActivity.this, SelectActivity.class);
+                        intent.putExtra("mode", "transfer");
+                        selectRemoveResultLauncher.launch(intent);
+                } return true;
+            }
+        });
+        popup.show();
+    }
+
+    public void onDeleteSelected(View view){
+        findViewById(R.id.ib_toolbar_trash).setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, SelectActivity.class);
+                intent.putExtra("mode", "delete");
+                intent.putExtra("dir_id", dirId);
+                selectRemoveResultLauncher.launch(intent);
+            }
+        });
     }
 
     @Override
