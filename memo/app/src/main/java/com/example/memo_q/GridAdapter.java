@@ -11,11 +11,11 @@ import android.widget.TextView;
 import androidx.annotation.RequiresApi;
 
 public class GridAdapter extends BaseAdapter {
-    Context context;
-    int layout;
-    LayoutInflater inf;
-    DbOpenHelper mDbOpenHelper;
-    int dirId;
+    private Context context;
+    private int layout;
+    private LayoutInflater inf;
+    private DbOpenHelper mDbOpenHelper;
+    private int dirId;
 
     public GridAdapter(Context context, int layout, DbOpenHelper mDbOpenHelper, int dirId){
         this.context = context;
@@ -24,6 +24,8 @@ public class GridAdapter extends BaseAdapter {
         this.dirId = dirId;
         inf = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
+
+    public void setDirId(int dirId){ this.dirId = dirId; }
 
     @Override
     public int getCount() { return mDbOpenHelper.getCountOfMemo(dirId); }

@@ -18,7 +18,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.PopupMenu;
@@ -30,127 +29,101 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.google.android.material.navigation.NavigationView;
 
 public class MainActivity extends AppCompatActivity {
-    DrawerLayout drawerLayout;
-    NavigationView navigationView;
-
-    ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            new ActivityResultCallback<ActivityResult>() {
-                @Override
-                public void onActivityResult(ActivityResult result) {
-                    if (result.getResultCode() == 9001) {
-                        Intent intent = result.getData();
-                        String content = intent.getStringExtra("content");
-                        int id = intent.getIntExtra("id", mDbOpenHelper.lastMemoId());
-                        Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(id);
-                        cursor.moveToFirst();
-                        // mDbOpenHelper.updateColumnToMemoTable(cursor.getInt(0), content, cursor.getString(2), cursor.getInt(3));
-                        mDbOpenHelper.updateColumnToMemoTable(cursor.getInt(0), content);
-
-                        int previousDirId = intent.getIntExtra("dir_id", -1);
-                        Intent reIntent = new Intent(MainActivity.this, MainActivity.class);
-                        reIntent.putExtra("dir_id", previousDirId);
-                        finish();
-                        startActivity(reIntent);
-                    }
-                    else if(result.getResultCode() == 9002) {
-                        Intent intent = result.getData();
-                        int id = intent.getIntExtra("id", mDbOpenHelper.lastMemoId());
-                        mDbOpenHelper.updateIsDeletedToTrue(id);
-
-                        int previousDirId = intent.getIntExtra("dir_id", -1);
-                        Intent reIntent = new Intent(MainActivity.this, MainActivity.class);
-                        reIntent.putExtra("dir_id", previousDirId);
-                        finish();
-                        startActivity(reIntent);
-                    }
-                }
-            });
-
-    ActivityResultLauncher<Intent> popUpResultLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            new ActivityResultCallback<ActivityResult>() {
-                @RequiresApi(api = Build.VERSION_CODES.O)
-                @Override
-                public void onActivityResult(ActivityResult result) {
-                    if (result.getResultCode() == 9001) {
-                        Intent intent = result.getData();
-                        String name = intent.getStringExtra("name");
-                        mDbOpenHelper.insertColumnToDirTable(name, DbOpenHelper.createdAt());
-
-                        int previousDirId = intent.getIntExtra("dir_id", -1);
-                        Intent reIntent = new Intent(MainActivity.this, MainActivity.class);
-                        reIntent.putExtra("dir_id", previousDirId);
-                        reIntent.putExtra("re", true);
-                        finish();
-                        startActivity(reIntent);
-                    }
-                    else if(result.getResultCode() == 9000) {
-                        Intent intent = result.getData();
-                        int previousDirId = intent.getIntExtra("dir_id", -1);
-                        Intent reIntent = new Intent(MainActivity.this, MainActivity.class);
-                        reIntent.putExtra("dir_id", previousDirId);
-                        reIntent.putExtra("re", true);
-                        finish();
-                        startActivity(reIntent);
-                    }
-                }
-            });
-
-    ActivityResultLauncher<Intent> selectRemoveResultLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            new ActivityResultCallback<ActivityResult>() {
-                @RequiresApi(api = Build.VERSION_CODES.O)
-                @Override
-                public void onActivityResult(ActivityResult result) {
-                    // 삭제 or 폴더 이동
-                    if (result.getResultCode() == 9001) {
-                        Intent intent = result.getData();
-                        int previousDirId = intent.getIntExtra("dir_id", -1);
-                        Intent reIntent = new Intent(MainActivity.this, MainActivity.class);
-                        reIntent.putExtra("dir_id", previousDirId);
-                        finish();
-                        startActivity(reIntent);
-                    }
-                    // 취소
-                    else if(result.getResultCode() == 9000) {
-                        Intent intent = result.getData();
-                        int previousDirId = intent.getIntExtra("dir_id", -1);
-                        Intent reIntent = new Intent(MainActivity.this, MainActivity.class);
-                        reIntent.putExtra("dir_id", previousDirId);
-                        finish();
-                        startActivity(reIntent);
-                    }
-                }
-            });
-
     private DbOpenHelper mDbOpenHelper;
-    private int dirId;
+    private GridAdapter gridAdapter;
+    private MenuAdapter menuAdapter;
+    private int dirId=-1;
 
-    @SuppressLint("ResourceAsColor")
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    private class Memo {
+        private int id;
+        Memo(int id){ this.id = id; }
+        void update(String content){
+            Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(id);
+            cursor.moveToFirst();
+            mDbOpenHelper.updateColumnToMemoTable(cursor.getInt(0), content);
+        }
+        void deleteToTrashCan(){ mDbOpenHelper.updateIsDeletedToTrue(id); }
+        void changeDir(int newDirId){ mDbOpenHelper.updateColumnToMemoTable(id, newDirId); }
+    }
 
+    String getDirName(int dirId){
+        switch(dirId){
+            case -1: return "모든 메모";
+            case 0: return "내 메모";
+            case 1: return "문서";
+            default:
+                Cursor dir = mDbOpenHelper.selectColumnsFromDirTable(dirId-3);
+                String dirName = dir.getString(1);
+                return dirName;
+        }
+    }
+
+    ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult( new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    Intent intent = result.getData();
+                    int id = intent.getIntExtra("id", mDbOpenHelper.lastMemoId()), restartDirId = dirId;
+                    Memo memo = new Memo(id);
+                    String content = intent.getStringExtra("content");
+                    int newDirId = intent.getIntExtra("new_dir_id", dirId);
+
+                    if (result.getResultCode() == 9001){
+                        // 메모 수정
+                        memo.update(content);
+                        gridAdapter.notifyDataSetChanged();
+                    }
+                    else if(result.getResultCode() == 9002){
+                        // 메모 삭제
+                        memo.deleteToTrashCan();
+                        gridAdapter.notifyDataSetChanged();
+                    }
+                    else if(result.getResultCode() == 9003){
+                        memo.changeDir(newDirId);
+                        String dirName = getDirName(newDirId);
+                        gridAdapter.notifyDataSetChanged();
+                        Toast.makeText(getApplicationContext(), dirName+" 폴더로 이동되었습니다.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+
+    ActivityResultLauncher<Intent> popUpResultLauncher = registerForActivityResult( new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @RequiresApi(api = Build.VERSION_CODES.O)
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    Intent intent = result.getData();
+                    String name = intent.getStringExtra("name");
+                    if (result.getResultCode() == 9001){
+                        mDbOpenHelper.insertColumnToDirTable(name, DbOpenHelper.createdAt());
+                        menuAdapter.notifyDataSetChanged();
+                        setListViewHeightBasedOnChildren(findViewById(R.id.listView_menu));
+                    }
+                }
+            });
+
+    ActivityResultLauncher<Intent> selectResultLauncher = registerForActivityResult( new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @RequiresApi(api = Build.VERSION_CODES.O)
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    gridAdapter.notifyDataSetChanged();
+                    Intent intent = result.getData();
+                    int newDirId = intent.getIntExtra("new_dir_id", -100);
+                    if(newDirId!=-100){
+                        String dirName = getDirName(newDirId);
+                        Toast.makeText(getApplicationContext(), dirName+" 폴더로 이동되었습니다.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+
+    private void startDB(){
         mDbOpenHelper = new DbOpenHelper(this);
         mDbOpenHelper.open();
         mDbOpenHelper.create();
+    }
 
-        drawerLayout = (DrawerLayout)findViewById(R.id.drawer);
-        navigationView = (NavigationView)findViewById(R.id.navigation_view);
-
-        if(getIntent().getBooleanExtra("re", false)){
-            drawerLayout.openDrawer(GravityCompat.START);
-            drawerLayout.bringChildToFront(navigationView);
-            drawerLayout.requestLayout();
-        }
-        dirId = getIntent().getIntExtra("dir_id", -1);
-        setDirId(dirId);
-
-        updateGridview();
-
+    private void setOnClickOfAddMemoBtn(){
         ImageButton addMemoBtn = (ImageButton) findViewById(R.id.ib_add_memo);
         addMemoBtn.setOnClickListener(new View.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.O)
@@ -168,11 +141,17 @@ public class MainActivity extends AppCompatActivity {
                 activityResultLauncher.launch(intent);
             }
         });
+    }
 
-        MenuAdapter menuAdapter = new MenuAdapter(getApplicationContext(), R.layout.item, mDbOpenHelper);
-        ListView listView = (ListView) findViewById(R.id.listView_menu);
+    private void setAdapterOfMenuListView(){
+        ListView listView = findViewById(R.id.listView_menu);
         listView.setAdapter(menuAdapter);
         setListViewHeightBasedOnChildren(listView);
+    }
+
+    private void setOnItemClickOfMenuListView(){
+        ListView listView = findViewById(R.id.listView_menu);
+        DrawerLayout drawerLayout = findViewById(R.id.drawer);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @SuppressLint("Range")
@@ -180,67 +159,67 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 setDirId(position+3);
                 drawerLayout.closeDrawer(GravityCompat.START);
-                updateGridview();
             }
         });
+    }
 
-        findViewById(R.id.menu_all).setOnClickListener(new View.OnClickListener() {
+    private void setOnClickOfDrawerBtn(int id, int dirId){
+        DrawerLayout drawerLayout = findViewById(R.id.drawer);
+        findViewById(id).setOnClickListener(new View.OnClickListener() {
             @SuppressLint("ResourceAsColor")
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View view) {
-                setDirId(-1);
+                setDirId(dirId);
                 drawerLayout.closeDrawer(GravityCompat.START);
-                updateGridview();
+                gridAdapter.setDirId(dirId);
+                gridAdapter.notifyDataSetChanged();
             }
         });
-        findViewById(R.id.menu_my).setOnClickListener(new View.OnClickListener() {
-            @SuppressLint("ResourceAsColor")
-            @RequiresApi(api = Build.VERSION_CODES.O)
-            @Override
-            public void onClick(View view) {
-                setDirId(0);
-                drawerLayout.closeDrawer(GravityCompat.START);
-                updateGridview();
-            }
-        });
-        findViewById(R.id.menu_docu).setOnClickListener(new View.OnClickListener() {
-            @SuppressLint("ResourceAsColor")
-            @RequiresApi(api = Build.VERSION_CODES.O)
-            @Override
-            public void onClick(View view) {
-                setDirId(1);
-                drawerLayout.closeDrawer(GravityCompat.START);
-                updateGridview();
-            }
-        });
-        findViewById(R.id.menu_trash).setOnClickListener(new View.OnClickListener() {
-            @SuppressLint("ResourceAsColor")
-            @RequiresApi(api = Build.VERSION_CODES.O)
-            @Override
-            public void onClick(View view) {
-                setDirId(2);
-                drawerLayout.closeDrawer(GravityCompat.START);
-                updateGridview();
-            }
-        });
+    }
+
+    private void setOnClickOfAddMenuBtn(){
         findViewById(R.id.menu_add).setOnClickListener(new View.OnClickListener() {
             @SuppressLint("ResourceAsColor")
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, PopUpActivity.class);
-                String datetime = DbOpenHelper.createdAt();
                 intent.putExtra("name", "");
                 intent.putExtra("dir_id", dirId);
                 popUpResultLauncher.launch(intent);
             }
         });
-
     }
 
-    private static void setListViewHeightBasedOnChildren(ListView listView)
-    {
+
+    @SuppressLint("ResourceAsColor")
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        startDB();
+
+        gridAdapter = new GridAdapter(getApplicationContext(), R.layout.item_card, mDbOpenHelper, dirId);
+        setAdapterOfMemoGridView();
+        setOnItemClickOfMemoGridView();
+        setOnItemLongClickOfMemoGridView();
+        menuAdapter = new MenuAdapter(getApplicationContext(), R.layout.item, mDbOpenHelper);
+        setAdapterOfMenuListView();
+        setOnItemClickOfMenuListView();
+
+        setDirId(-1);
+
+        setOnClickOfAddMemoBtn();
+        setOnClickOfDrawerBtn(R.id.menu_all, -1);
+        setOnClickOfDrawerBtn(R.id.menu_my, 0);
+        setOnClickOfDrawerBtn(R.id.menu_docu, 1);
+        setOnClickOfDrawerBtn(R.id.menu_trash, 2);
+        setOnClickOfAddMenuBtn();
+    }
+
+    private static void setListViewHeightBasedOnChildren(ListView listView) {
         ListAdapter listAdapter = listView.getAdapter();
         if (listAdapter == null)
             return;
@@ -272,22 +251,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void setDirId(int dirId){
         this.dirId = dirId;
-        String title;
-        TextView barTitle = (TextView) findViewById(R.id.title);
+        gridAdapter.setDirId(dirId);
+        gridAdapter.notifyDataSetChanged();
+
+        TextView barTitle = findViewById(R.id.title);
         ImageButton addMemoButton = findViewById(R.id.ib_add_memo);
         switch(dirId){
             case -1:
-                barTitle.setText("모든 메모");
-                addMemoButton.setEnabled(true);
-                addMemoButton.setVisibility(View.VISIBLE);
-                break;
             case 0:
-                barTitle.setText("내 메모");
-                addMemoButton.setEnabled(true);
-                addMemoButton.setVisibility(View.VISIBLE);
-                break;
             case 1:
-                barTitle.setText("문서");
+                barTitle.setText(getDirName(dirId));
                 addMemoButton.setEnabled(true);
                 addMemoButton.setVisibility(View.VISIBLE);
                 break;
@@ -305,14 +278,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void updateGridview(){
-        GridAdapter gridAdapter = new GridAdapter(getApplicationContext(), R.layout.item_card, mDbOpenHelper, dirId);
+    private void setAdapterOfMemoGridView(){
         GridView gridView = findViewById(R.id.grid_view);
         gridView.setAdapter(gridAdapter);
+    }
+
+    private void setOnItemClickOfMemoGridView(){
+        GridView gridView = findViewById(R.id.grid_view);
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @SuppressLint("Range")
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                if(dirId==2) return;
                 Intent intent = new Intent(MainActivity.this, MainActivity2.class);
                 Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(dirId, position);
                 intent.putExtra("datetime", cursor.getString(2));
@@ -322,52 +299,63 @@ public class MainActivity extends AppCompatActivity {
                 activityResultLauncher.launch(intent);
             }
         });
+    }
+
+    private void setOnMenuItemClickOfPopupInTrashDir(PopupMenu popup, int memoId){
+        getMenuInflater().inflate(R.menu.trash_menu, popup.getMenu());
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                switch(menuItem.getItemId()){
+                    case R.id.trash_delete:
+                        mDbOpenHelper.deleteColumnOfMemoTable(memoId);
+                        gridAdapter.notifyDataSetChanged();
+                        break;
+                    case R.id.trash_restore:
+                        mDbOpenHelper.updateIsDeletedToFalse(memoId);
+                        gridAdapter.notifyDataSetChanged();
+                        break;
+                } return true;
+            }
+        });
+    }
+
+    private void setOnItemLongClickOfMemoGridView(){
+        GridView gridView = findViewById(R.id.grid_view);
         gridView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @SuppressLint("Range")
             @Override
             public boolean onItemLongClick(AdapterView<?> adapterView, View view, int position, long id) {
                 Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(dirId, position);
                 int memoId = cursor.getInt(cursor.getColumnIndex("_id"));
-                String content = cursor.getString(1);
-
                 PopupMenu popup = new PopupMenu(getApplicationContext(), view);
-                if(dirId==2){
-                    getMenuInflater().inflate(R.menu.trash_menu, popup.getMenu());
-                    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem menuItem) {
-                            switch(menuItem.getItemId()){
-                                case R.id.trash_delete:
-                                    mDbOpenHelper.deleteColumnOfMemoTable(memoId);
-                                    updateGridview();
-                                    break;
-                                case R.id.trash_restore:
-                                    mDbOpenHelper.updateIsDeletedToFalse(memoId);
-                                    updateGridview();
-                                    break;
-                            } return true;
-                        }
-                    });
-                }
-                else{
-                    getMenuInflater().inflate(R.menu.memo_menu, popup.getMenu());
-                    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem menuItem) {
-                            switch(menuItem.getItemId()){
-                                case R.id.memo_delete:
-                                    mDbOpenHelper.updateIsDeletedToTrue(memoId);
-                                    updateGridview();
-                            } return true;
-                        }
-                    });
-                }
-                popup.show(); return true;
+                if(dirId==2)
+                    setOnMenuItemClickOfPopupInTrashDir(popup, memoId);
+                else
+                    setOnMenuItemClickOfPopupNotInTrashDir(popup, memoId);
+                popup.show();
+                return true;
+            }
+        });
+    }
+
+    private void setOnMenuItemClickOfPopupNotInTrashDir(PopupMenu popup, int memoId){
+        getMenuInflater().inflate(R.menu.memo_menu, popup.getMenu());
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                switch(menuItem.getItemId()){
+                    case R.id.memo_delete:
+                        mDbOpenHelper.updateIsDeletedToTrue(memoId);
+                        gridAdapter.notifyDataSetChanged();
+                } return true;
             }
         });
     }
 
     public void onMenuSelected(View view){
+        DrawerLayout drawerLayout = findViewById(R.id.drawer);
+        NavigationView navigationView = findViewById(R.id.navigation_view);
         if(drawerLayout.isDrawerOpen(GravityCompat.START))
             drawerLayout.closeDrawer(GravityCompat.START);
         else{
@@ -377,8 +365,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void onEtcSelected(View view){
-        PopupMenu popup = new PopupMenu(getApplicationContext(), view);
+    private void setOnMenuItemClickOfPopupNotInTrashDir(PopupMenu popup){
         getMenuInflater().inflate(R.menu.main_option_menu, popup.getMenu());
         popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
@@ -387,10 +374,35 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.main_option_trasfer:
                         Intent intent = new Intent(MainActivity.this, SelectActivity.class);
                         intent.putExtra("mode", "transfer");
-                        selectRemoveResultLauncher.launch(intent);
+                        intent.putExtra("dir_id", dirId);
+                        selectResultLauncher.launch(intent);
                 } return true;
             }
         });
+    }
+
+    private void setOnMenuItemClickOfPopupInTrashDir(PopupMenu popup){
+        getMenuInflater().inflate(R.menu.trash_option_menu, popup.getMenu());
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                switch(menuItem.getItemId()){
+                    case R.id.trash_option_restore:
+                        Intent intent = new Intent(MainActivity.this, SelectActivity.class);
+                        intent.putExtra("mode", "restore");
+                        intent.putExtra("dir_id", dirId);
+                        selectResultLauncher.launch(intent);
+                } return true;
+            }
+        });
+    }
+
+    public void onEtcSelected(View view){
+        PopupMenu popup = new PopupMenu(getApplicationContext(), view);
+        if(dirId==2)
+            setOnMenuItemClickOfPopupInTrashDir(popup);
+        else
+            setOnMenuItemClickOfPopupNotInTrashDir(popup);
         popup.show();
     }
 
@@ -401,13 +413,14 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(MainActivity.this, SelectActivity.class);
                 intent.putExtra("mode", "delete");
                 intent.putExtra("dir_id", dirId);
-                selectRemoveResultLauncher.launch(intent);
+                selectResultLauncher.launch(intent);
             }
         });
     }
 
     @Override
     public void onBackPressed() {
+        DrawerLayout drawerLayout = findViewById(R.id.drawer);
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START);
         } else {

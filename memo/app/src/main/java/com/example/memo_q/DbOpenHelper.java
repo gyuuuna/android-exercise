@@ -118,9 +118,6 @@ public class DbOpenHelper {
         return mDB.query(MemoDatabase.CreateDB._TABLENAME0, null, "_id=?", new String[]{Integer.toString(id)}, null, null, null);
     }
 
-
-
-
     public Cursor sortColumnOfDirTable(String sort){
         Cursor c = mDB.rawQuery( "SELECT * FROM dirtable ORDER BY " + sort + ";", null);
         return c;
@@ -139,16 +136,6 @@ public class DbOpenHelper {
         values.put(DirDatabase.CreateDB.CREATED_AT, created_at);
         return mDB.update(DirDatabase.CreateDB._TABLENAME0, values, "_id=?", new String[]{Integer.toString(id)}) > 0;
     }
-
-    /*
-    public boolean updateColumnToMemoTable(int id, String content, String created_at, int dir_id){
-        ContentValues values = new ContentValues();
-        values.put(MemoDatabase.CreateDB.CONTENT, content);
-        values.put(MemoDatabase.CreateDB.CREATED_AT, created_at);
-        values.put(MemoDatabase.CreateDB.DIR_ID, dir_id);
-        return mDB.update(MemoDatabase.CreateDB._TABLENAME0, values, "_id=?", new String[]{Integer.toString(id)}) > 0;
-    }
-     */
 
     public boolean updateColumnToMemoTable(int id, String content){
         ContentValues values = new ContentValues();
@@ -192,7 +179,7 @@ public class DbOpenHelper {
     }
 
     public boolean deleteColumnOfMemoTable(long id){
-        return mDB.delete(MemoDatabase.CreateDB._TABLENAME0, "_id=? AND is_deleted=?", new String[]{Integer.toString((int) id), "false"}) > 0;
+        return mDB.delete(MemoDatabase.CreateDB._TABLENAME0, "_id=? AND is_deleted=?", new String[]{Integer.toString((int) id), "true"}) > 0;
     }
 
     // Created at
@@ -216,15 +203,12 @@ public class DbOpenHelper {
         return cursor.getInt(0);
     }
 
-    @SuppressLint("Range")
-    public int getCountOfMemo(){
-        Cursor cursor = mDB.rawQuery( "SELECT COUNT(_id) FROM memotable WHERE is_deleted=?;", new String[]{"false"});
-        cursor.moveToFirst();
-        return cursor.getInt(0);
-    }
-
     public int getCountOfMemo(int dirId){
-        if(dirId<0) return getCountOfMemo();
+        if(dirId<0){
+            Cursor cursor = mDB.rawQuery( "SELECT COUNT(_id) FROM memotable WHERE is_deleted=?;", new String[]{"false"});
+            cursor.moveToFirst();
+            return cursor.getInt(0);
+        }
         if(dirId==2){
             Cursor cursor = mDB.rawQuery( "SELECT COUNT(_id) FROM memotable WHERE is_deleted=?;", new String[]{"true"});
             cursor.moveToFirst();

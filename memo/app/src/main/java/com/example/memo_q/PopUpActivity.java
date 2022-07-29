@@ -19,7 +19,6 @@ public class PopUpActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         String name = intent.getStringExtra("name");
-        int dirId = intent.getIntExtra("dir_id", -1);
 
         EditText editText = (EditText) findViewById(R.id.popup_text);
         editText.setText(name);
@@ -30,7 +29,6 @@ public class PopUpActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent finishIntent = new Intent(getApplicationContext(), MainActivity.class);
                 finishIntent.putExtra("name", editText.getText().toString());
-                finishIntent.putExtra("dir_id", dirId);
                 setResult(9001, finishIntent);
                 finish();
             }
@@ -41,7 +39,6 @@ public class PopUpActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent finishIntent = new Intent(getApplicationContext(), MainActivity.class);
-                finishIntent.putExtra("dir_id", dirId);
                 setResult(9000, finishIntent);
                 finish();
             }

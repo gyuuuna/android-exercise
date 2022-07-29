@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#00FFFFFF"
+    tools:context=".PopUpActivity">
+
+    <androidx.cardview.widget.CardView
+        android:backgroundTint="@color/white"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginBottom="80dp"
+        android:layout_marginEnd="12dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginLeft="30dp"
+                    android:text="폴더 이동"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"
+                    android:textSize="20dp"></TextView>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="20dp"
+                    android:layout_weight="1"></View>
+
+                <ImageButton
+                    android:id="@+id/ib_add_dir"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginRight="30dp"
+                    android:src="@drawable/ic_add_dir"
+                    android:background="#00000000"></ImageButton>
+
+            </LinearLayout>
+
+            <ScrollView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="20dp"></View>
+
+                    <LinearLayout
+                        android:id="@+id/select_dir_my"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:orientation="horizontal">
+
+                        <RadioButton
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="false"
+                            android:enabled="false"
+                            android:layout_marginLeft="10dp"
+                            android:layout_marginRight="10dp"></RadioButton>
+
+                        <ImageButton
+                            android:id="@+id/ib_menu_my"
+                            android:layout_width="25dp"
+                            android:layout_height="25dp"
+                            android:layout_gravity="center_vertical|left"
+                            android:layout_marginLeft="20dp"
+                            android:layout_marginBottom="5dp"
+                            android:background="#00FFFFFF"
+                            android:minWidth="48dp"
+                            android:minHeight="48dp"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/ic_memo"
+                            tools:ignore="MissingConstraints"></ImageButton>
+                        <TextView
+                            android:id="@+id/textView_menu_my"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginLeft="15dp"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="5dp"
+                            android:layout_marginRight="5dp"
+                            android:textColor="@color/black"
+                            android:text="내 메모"
+                            android:textSize="20dp"></TextView>
+                    </LinearLayout>
+                    <View
+                        android:background="#C1C1C1"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"></View>
+                    <LinearLayout
+                        android:id="@+id/select_dir_docu"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:clickable="true"
+                        android:orientation="horizontal">
+                        <RadioButton
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="false"
+                            android:enabled="false"
+                            android:layout_marginLeft="10dp"
+                            android:layout_marginRight="10dp"></RadioButton>
+                        <ImageButton
+                            android:id="@+id/ib_menu_docu"
+                            android:layout_width="25dp"
+                            android:layout_height="25dp"
+                            android:layout_gravity="center_vertical|left"
+                            android:layout_marginLeft="20dp"
+                            android:layout_marginBottom="5dp"
+                            android:background="#00FFFFFF"
+                            android:minWidth="48dp"
+                            android:minHeight="48dp"
+                            android:scaleType="fitXY"
+                            android:src="@drawable/ic_docu"
+                            tools:ignore="MissingConstraints"></ImageButton>
+                        <TextView
+                            android:id="@+id/textView_menu_docu"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginLeft="15dp"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="5dp"
+                            android:layout_marginRight="5dp"
+                            android:textColor="@color/black"
+                            android:text="문서"
+                            android:textSize="20dp"></TextView>
+                    </LinearLayout>
+                    <View
+                        android:background="#C1C1C1"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"></View>
+
+                    <ListView
+                        android:id="@+id/listView_select_menu"
+                        android:clickable="true"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"/>
+                </LinearLayout>
+
+            </ScrollView>
+
+
+            <Button
+                android:id="@+id/select_popup_no"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:layout_gravity="bottom|center"
+                android:background="#00FFFFFF"
+                android:text="취소"
+                android:textColor="@color/custom_red"
+                android:textSize="20dp"
+                android:textStyle="bold"></Button>
+
+        </LinearLayout>
+
+
+
+    </androidx.cardview.widget.CardView>
+</androidx.constraintlayout.widget.ConstraintLayout>

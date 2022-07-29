@@ -19,13 +19,13 @@ import androidx.annotation.RequiresApi;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-public class MenuAdapter extends BaseAdapter {
-    private Context context;
-    private int layout;
-    private LayoutInflater inf;
-    private DbOpenHelper mDbOpenHelper;
+public class SelectPopupAdapter extends BaseAdapter {
+    Context context;
+    int layout;
+    LayoutInflater inf;
+    DbOpenHelper mDbOpenHelper;
 
-    public MenuAdapter(Context context, int layout, DbOpenHelper mDbOpenHelper){
+    public SelectPopupAdapter(Context context, int layout, DbOpenHelper mDbOpenHelper){
         this.context = context;
         this.layout = layout;
         this.mDbOpenHelper = mDbOpenHelper;
@@ -51,7 +51,7 @@ public class MenuAdapter extends BaseAdapter {
         Cursor cursor = mDbOpenHelper.selectColumnsFromDirTable(position);
         if (cursor != null) {
             String content = cursor.getString(1);
-            TextView tv = (TextView) convertView.findViewById(R.id.textView_menu);
+            TextView tv = (TextView) convertView.findViewById(R.id.textView_select_popup);
             tv.setText(content);
             cursor.close();
         }

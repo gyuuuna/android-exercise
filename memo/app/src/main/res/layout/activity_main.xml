@@ -49,7 +49,7 @@
             android:layout_width="291dp"
             android:layout_height="match_parent"
             android:layout_gravity="left"
-            android:background="#00000000"
+            android:background="@color/white"
             android:fitsSystemWindows="true"
             tools:ignore="MissingConstraints"
             tools:layout_editor_absoluteY="-5dp">
