@@ -11,18 +11,16 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.SparseBooleanArray;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.GridView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class SelectActivity extends AppCompatActivity {
     private DbOpenHelper mDbOpenHelper;
     private int dirId;
-    private String mode;
+    private int mode;
 
     SelectAdapter selectAdapter;
     GridView gridView;
@@ -33,30 +31,11 @@ public class SelectActivity extends AppCompatActivity {
                 @RequiresApi(api = Build.VERSION_CODES.O)
                 @Override
                 public void onActivityResult(ActivityResult result) {
-                    if (result.getResultCode() == 9003) {
-                        Intent intent = result.getData();
-                        int newDirId = intent.getIntExtra("new_dir_id", 0);
+                    if(result.getResultCode() != ResultCode.APPROVE) return;
 
-                        int count = selectAdapter.getCount();
-                        int previousPosition = 0;
-                        int position = 0;
-
-                        while(position<count){
-                            if(!selectAdapter.isChecked(previousPosition++)){
-                                position++; continue;
-                            }
-                            Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(dirId, position);
-                            int id = cursor.getInt(0);
-                            mDbOpenHelper.updateColumnToMemoTable(id, newDirId);
-                            if(dirId==-1) position++;
-                            else count--;
-                        }
-
-                        Intent finishIntent = new Intent(getApplicationContext(), MainActivity.class);
-                        finishIntent.putExtra("new_dir_id", newDirId);
-                        setResult(9001, finishIntent);
-                        finish();
-                    }
+                    Intent intent = result.getData();
+                    int newDirId = intent.getIntExtra("new_dir_id", 0);
+                    executeCommandForAllCheckedItems(newDirId);
                 }
             });
 
@@ -65,19 +44,47 @@ public class SelectActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select);
 
-        mDbOpenHelper = new DbOpenHelper(this);
-        mDbOpenHelper.open();
-
+        startDB();
         Intent intent = getIntent();
         dirId = intent.getIntExtra("dir_id", -1);
-        mode = intent.getStringExtra("mode");
+        mode = intent.getIntExtra("mode", ResultCode.CANCEL);
 
+        setAdapterOfGridView();
+        setOnItemClickOfGridView();
+        setOnClickOfCheckBoxAll();
+
+        setOnClickOfCancelBtn();
+        setOnClickOfApproveBtn();
+    }
+
+    private void startDB(){
+        mDbOpenHelper = new DbOpenHelper(this);
+        mDbOpenHelper.open();
+    }
+
+    private void setAdapterOfGridView(){
         selectAdapter = new SelectAdapter(getApplicationContext(), R.layout.select_item_card, mDbOpenHelper, dirId);
         gridView = findViewById(R.id.select_grid_view);
         gridView.setAdapter(selectAdapter);
+    }
 
-        CheckBox all_checkBox = findViewById(R.id.select_all);
-        all_checkBox.setOnClickListener(new View.OnClickListener() {
+    private void setOnItemClickOfGridView(){
+        CheckBox checkBoxAll = findViewById(R.id.select_all);
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                selectAdapter.setChecked(position);
+                checkBoxAll.setChecked(selectAdapter.isAllChecked());
+                TextView tv = findViewById(R.id.select_count);
+                tv.setText(""+selectAdapter.getCheckedCount()+"개 선택됨");
+            }
+        });
+    }
+
+    private void setOnClickOfCheckBoxAll(){
+        CheckBox checkBoxAll = findViewById(R.id.select_all);
+        checkBoxAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 selectAdapter.setAllChecked(!selectAdapter.isAllChecked());
@@ -85,78 +92,71 @@ public class SelectActivity extends AppCompatActivity {
                 tv.setText(""+selectAdapter.getCheckedCount()+"개 선택됨");
             }
         });
+    }
 
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                selectAdapter.setChecked(position);
-                all_checkBox.setChecked(selectAdapter.isAllChecked());
-                TextView tv = findViewById(R.id.select_count);
-                tv.setText(""+selectAdapter.getCheckedCount()+"개 선택됨");
-            }
-        });
-
+    private void setOnClickOfCancelBtn(){
         findViewById(R.id.select_no).setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                Intent finishIntent = new Intent(getApplicationContext(), MainActivity.class);
-                setResult(9000, finishIntent);
-                finish();
-            }
+            public void onClick(View view) { finish(); }
         });
+    }
 
+    private void setOnClickOfApproveBtn(){
         findViewById(R.id.select_yes).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                // 삭제
-                if(mode.equals("delete")){
-                    int count = selectAdapter.getCount();
-                    int previousPosition = 0;
-                    int position = 0;
-
-                    while(position<count){
-                        if(!selectAdapter.isChecked(previousPosition++)){
-                            position++; continue;
-                        }
-                        Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(dirId, position);
-                        int id = cursor.getInt(0);
-                        if(dirId==2)
-                            mDbOpenHelper.deleteColumnOfMemoTable(id);
-                        else
-                            mDbOpenHelper.updateIsDeletedToTrue(id);
-                        count--;
-                    }
-                    Intent finishIntent = new Intent(getApplicationContext(), MainActivity.class);
-                    setResult(9001, finishIntent);
-                    finish();
-                }
-                // 폴더 이동
-                else if(mode.equals("transfer")){
-                    Intent newIntent = new Intent(getApplicationContext(), SelectPopupActivity.class);
+                if(mode==ResultCode.MOVE){
+                    Intent newIntent = new Intent(getApplicationContext(), DirPopupActivity.class);
                     newIntent.putExtra("from", "SelectActivity");
                     popUpResultLauncher.launch(newIntent);
                 }
-                else if(mode.equals("restore")){
-                    int count = selectAdapter.getCount();
-                    int previousPosition = 0;
-                    int position = 0;
-
-                    while(position<count){
-                        if(!selectAdapter.isChecked(previousPosition++)){
-                            position++; continue;
-                        }
-                        Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(dirId, position);
-                        int id = cursor.getInt(0);
-                        mDbOpenHelper.updateIsDeletedToFalse(id);
-                        count--;
-                    }
-                    Intent finishIntent = new Intent(getApplicationContext(), MainActivity.class);
-                    setResult(9001, finishIntent);
-                    finish();
-                }
+                else executeCommandForAllCheckedItems();
             }
         });
     }
+
+    private void executeCommandForAllCheckedItems(int newDirId){
+        int count = selectAdapter.getCount();
+        int previousPosition = 0;
+        int position = 0;
+
+        while(position<count){
+            if(!selectAdapter.isChecked(previousPosition++)){
+                position++; continue;
+            }
+            Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(dirId, position);
+            int id = cursor.getInt(0);
+            Memo memo = new Memo(id, mDbOpenHelper);
+            memo.changeDir(newDirId);
+
+            if(dirId== Dir.MENU_ALL) position++;
+            else count--;
+        }
+
+        Intent finishIntent = new Intent(getApplicationContext(), MainActivity.class);
+        finishIntent.putExtra("new_dir_id", newDirId);
+        finish();
+    }
+
+    private void executeCommandForAllCheckedItems(){
+        int count = selectAdapter.getCount();
+        int previousPosition = 0;
+        int position = 0;
+
+        while(position<count){
+            if(!selectAdapter.isChecked(previousPosition++)){
+                position++; continue;
+            }
+            Cursor cursor = mDbOpenHelper.selectColumnsFromMemoTable(dirId, position);
+            int id = cursor.getInt(0);
+            Memo memo = new Memo(id, mDbOpenHelper);
+
+            if(mode==ResultCode.DELETE) memo.delete();
+            else if(mode==ResultCode.RESTORE) memo.restore();
+            else if(mode==ResultCode.REAL_DELETE) memo.realDelete();
+            count--;
+        }
+        finish();
+    }
+
 }

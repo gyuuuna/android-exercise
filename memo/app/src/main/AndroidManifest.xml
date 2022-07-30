@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar">
         <activity
-            android:name=".SelectPopupActivity"
+            android:name=".DirPopupActivity"
             android:exported="false" />
         <activity
             android:name=".SelectActivity"
@@ -19,7 +19,7 @@
             android:name=".MainActivity2"
             android:exported="false" />
         <activity
-            android:name=".PopUpActivity"
+            android:name=".DirNamePopupActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

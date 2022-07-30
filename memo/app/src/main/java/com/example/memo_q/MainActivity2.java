@@ -6,8 +6,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
 
 import android.content.Intent;
 import android.os.Build;
@@ -19,6 +17,7 @@ import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 
+
 public class MainActivity2 extends AppCompatActivity {
     private int id;
     private int newDirId;
@@ -29,18 +28,72 @@ public class MainActivity2 extends AppCompatActivity {
                 @RequiresApi(api = Build.VERSION_CODES.O)
                 @Override
                 public void onActivityResult(ActivityResult result) {
-                    if (result.getResultCode() == 9003) {
-                        Intent intent = result.getData();
-                        newDirId = intent.getIntExtra("new_dir_id", 0);
+                    if(result.getResultCode() != ResultCode.APPROVE ) return;
 
-                        Intent finishIntent = new Intent(MainActivity2.this, MainActivity.class);
-                        finishIntent.putExtra("id", id);
-                        finishIntent.putExtra("new_dir_id", newDirId);
-                        setResult(9003, finishIntent);
-                        finish();
-                    }
+                    Intent intent = result.getData();
+                    newDirId = intent.getIntExtra("new_dir_id", 0);
+
+                    Intent finishIntent = new Intent(MainActivity2.this, MainActivity.class);
+                    finishIntent.putExtra("id", id);
+                    finishIntent.putExtra("new_dir_id", newDirId);
+                    setResult(ResultCode.MOVE, finishIntent);
+                    finish();
                 }
             });
+
+    private void setDateTimeTextView(String datetime){
+        TextView textView = findViewById(R.id.textView);
+        textView.setText(datetime+"에 생성됨");
+    }
+
+    private void setContentEditText(String content){
+        EditText editText = findViewById(R.id.editTextTextMultiLine);
+        editText.setText(content);
+    }
+
+    private void setOnClickOfCheckButton(){
+        ImageButton checkButton = findViewById(R.id.ib_check);
+        checkButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                EditText editText = findViewById(R.id.editTextTextMultiLine);
+                String content = editText.getText().toString();
+                returnToMainActivity(content, ResultCode.UPDATE);
+            }
+        });
+    }
+
+    private void setOnMenuItemClickOfPopup(PopupMenu popup){
+        getMenuInflater().inflate(R.menu.etc_option_menu, popup.getMenu());
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                switch(menuItem.getItemId()){
+                    case R.id.etc_option_delete:{
+                        returnToMainActivity(null, ResultCode.DELETE);
+                    } break;
+                    case R.id.etc_option_trasfer:{
+                        Intent newIntent = new Intent(MainActivity2.this, DirPopupActivity.class);
+                        newIntent.putExtra("from", "MainActivity2");
+                        selectPopupResultLauncher.launch(newIntent);
+                    } break;
+                }
+                return true;
+            }
+        });
+    }
+
+    private void setOnClickOfThreeDotsButton(){
+        ImageButton threeDotsButton = (ImageButton) findViewById(R.id.ib_three_dots);
+        threeDotsButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                PopupMenu popup = new PopupMenu(getApplicationContext(), view);
+                setOnMenuItemClickOfPopup(popup);
+                popup.show();
+            }
+        });
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,62 +105,25 @@ public class MainActivity2 extends AppCompatActivity {
         String content = intent.getStringExtra("content");
         String datetime = intent.getStringExtra("datetime");
 
-        EditText editText = findViewById(R.id.editTextTextMultiLine);
-        editText.setText(content);
-
-        TextView textView = findViewById(R.id.textView);
-        textView.setText(datetime+"에 생성됨");
-
-        ImageButton checkButton = findViewById(R.id.ib_check);
-        checkButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent finishIntent = new Intent(getApplicationContext(), MainActivity.class);
-                finishIntent.putExtra("content", editText.getText().toString());
-                finishIntent.putExtra("id", id);
-                setResult(9001, finishIntent);
-                finish();
-            }
-        });
-
-        ImageButton threeDotsButton = (ImageButton) findViewById(R.id.ib_three_dots);
-        threeDotsButton.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view) {
-                PopupMenu popup = new PopupMenu(getApplicationContext(), view);
-                getMenuInflater().inflate(R.menu.etc_option_menu, popup.getMenu());
-
-                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem menuItem) {
-                        switch(menuItem.getItemId()){
-                            case R.id.etc_option_delete:{
-                                Intent finishIntent = new Intent(MainActivity2.this, MainActivity.class);
-                                finishIntent.putExtra("id", id);
-                                setResult(9002, finishIntent);
-                                finish();
-                            } break;
-                            case R.id.etc_option_trasfer:{
-                                Intent newIntent = new Intent(MainActivity2.this, SelectPopupActivity.class);
-                                newIntent.putExtra("from", "MainActivity2");
-                                selectPopupResultLauncher.launch(newIntent);
-                            } break;
-                        }
-                        return true;
-                    }
-                });
-                popup.show();
-            }
-        });
+        setContentEditText(content);
+        setDateTimeTextView(datetime);
+        setOnClickOfCheckButton();
+        setOnClickOfThreeDotsButton();
     }
 
     @Override
     public void onBackPressed(){
-        Intent finishIntent = new Intent(getApplicationContext(), MainActivity.class);
         EditText editText = findViewById(R.id.editTextTextMultiLine);
-        finishIntent.putExtra("content", editText.getText().toString());
-        finishIntent.putExtra("id", id);
-        setResult(9001, finishIntent);
+        String content = editText.getText().toString();
+        returnToMainActivity(content, ResultCode.UPDATE);
+    }
+
+    private void returnToMainActivity(String content, int resultCode){
+        Intent intent = new Intent(MainActivity2.this, MainActivity.class);
+        if(content!=null) intent.putExtra("content", content);
+        intent.putExtra("id", id);
+        setResult(resultCode, intent);
         finish();
     }
+
 }

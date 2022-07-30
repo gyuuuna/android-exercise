@@ -19,13 +19,13 @@ import androidx.annotation.RequiresApi;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-public class SelectPopupAdapter extends BaseAdapter {
+public class DirPopupAdapter extends BaseAdapter {
     Context context;
     int layout;
     LayoutInflater inf;
     DbOpenHelper mDbOpenHelper;
 
-    public SelectPopupAdapter(Context context, int layout, DbOpenHelper mDbOpenHelper){
+    public DirPopupAdapter(Context context, int layout, DbOpenHelper mDbOpenHelper){
         this.context = context;
         this.layout = layout;
         this.mDbOpenHelper = mDbOpenHelper;
